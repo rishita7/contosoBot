@@ -8,7 +8,10 @@ using System.Web.Http.Description;
 using Microsoft.Bot.Connector;
 using Newtonsoft.Json;
 using System.Collections.Generic;
-using contosoBot.Services; 
+using contosoBot.Services;
+using Microsoft.Bot.Builder.Luis;
+using contosoBot.Sockservices;
+//using dbo.BuildVersion.sql; 
 
 namespace contosoBot
 {
@@ -31,10 +34,16 @@ namespace contosoBot
                 ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
                 // The connector client is equating the variable connector to a new connector client with a uri that does the activity 
                 // WRITE CODE HERE 
-                contosoBot.Services.StockItem stock1;
-               
 
-        HttpClient client = new HttpClient();
+                StateClient stateClient = activity.GetStateClient();
+                BotData userData = await stateClient.BotState.GetUserDataAsync(activity.ChannelId, activity.From.Id);
+
+                contosoBot.Services.StockItem stock1;
+                //var message = contosoBot.dbo.BuildVersion.sql; 
+
+                var phrase = activity.Text;
+
+                HttpClient client = new HttpClient();
                 string rawData = await client.GetStringAsync(new Uri("http://dev.markitondemand.com/Api/v2/Quote/json?symbol=" + activity.Text));
                 stock1 = JsonConvert.DeserializeObject<StockItem>(rawData);
 
@@ -42,9 +51,9 @@ namespace contosoBot
                 float ChangePercentYTD = stock1.ChangePercentYTD;
                 string Time = stock1.Timestamp;
                 float MarketCap = stock1.MarketCap;
-                float LastPrice = stock1.LastPrice;
                 float Open = stock1.Open;
                 string symbol = stock1.Symbol;
+                float LastPrice = stock1.LastPrice;
 
                 // adding the HERO CARD
                 Activity stockReply = activity.CreateReply($"Stock for the {name}");
@@ -69,7 +78,7 @@ namespace contosoBot
                 ThumbnailCard plCard = new ThumbnailCard()
                 {
                     Title = name + ":",
-                    Subtitle = " On " + Time + " Stock Price is: $" + LastPrice + "  With a market value of: " + MarketCap + "  And its Change in Year to Date percentage is: " + ChangePercentYTD + "%",
+                    Subtitle = " On " + Time + " Stock Price is: $" + LastPrice + "  With a market capitalization of: " + MarketCap + "  And its Change in Year to Date percentage is: " + ChangePercentYTD + "%",
                     Images = cardImages,
                     Buttons = cardButtons
                 };
